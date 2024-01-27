@@ -12,11 +12,14 @@ java {
   // Configure the java toolchain. This allows gradle to auto-provision JDK 17 on systems that only have JDK 8 installed for example.
   toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
+repositories {
+  mavenLocal()
+}
 
 dependencies {
   paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
-  // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
-  // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
+
+  compileOnly("net.uniquepixels:game-engine:1.0.0")
 }
 
 tasks {

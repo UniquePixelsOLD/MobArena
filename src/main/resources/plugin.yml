@@ -1,6 +1,9 @@
 name: $name
 version: $version
-main: net.uniquepixels.game.template.GameTemplate
+main: net.uniquepixels.game.mobarena.MobArena
 description: $description
 author: DasShorty
+depend: [GameEngine]
 api-version: "$apiVersion"
+commands:
+  wave:
