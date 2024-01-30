@@ -20,7 +20,7 @@ public class MobArenaGame extends Game {
   private final MobWaves mobWaves = new MobWaves();
 
   public MobArenaGame(Plugin plugin) {
-    super(20, 2, 2, Material.ZOMBIE_HEAD, GameType.MOB_ARENA, plugin);
+    super(20, 1, 1, Material.ZOMBIE_HEAD, GameType.MOB_ARENA, plugin);
 
     Bukkit.getPluginManager().registerEvents(mobWaves, plugin);
 

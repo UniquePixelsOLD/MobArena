@@ -2,8 +2,10 @@ package net.uniquepixels.game.mobarena.running;
 
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
+import net.uniquepixels.game.mobarena.MobArena;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,12 @@ public class MobWave {
     this.wave = wave;
 
     this.addPlayers();
+
+    Bukkit.getScheduler().runTaskTimer(JavaPlugin.getPlugin(MobArena.class), () -> {
+
+        this.entities.removeIf(Entity::isDead);
+
+    }, 0L, 20 * 4L);
   }
 
   private void addPlayers() {
@@ -38,8 +46,6 @@ public class MobWave {
   public void updateBar() {
     bossBar.name(Component.text("(" + this.wave + "/10) Remaining monsters » " + entities.size()));
     float progress = this.getProgress();
-
-    Bukkit.broadcast(Component.text(progress));
     bossBar.progress(progress);
   }
 

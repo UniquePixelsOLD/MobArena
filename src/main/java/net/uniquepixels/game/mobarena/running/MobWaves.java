@@ -1,32 +1,39 @@
 package net.uniquepixels.game.mobarena.running;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.TitlePart;
 import net.uniquepixels.game.mobarena.MobArena;
+import net.uniquepixels.game.mobarena.economy.WaveCoins;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class MobWaves implements Listener {
 
   private final World world = Bukkit.getWorld("world");
-  private final List<EntityType> entities = List.of(
-    EntityType.ZOMBIE,
-    EntityType.SKELETON,
-    EntityType.BLAZE,
-    EntityType.SPIDER,
-    EntityType.CAVE_SPIDER,
-    EntityType.CREEPER
-  );
+  private final WaveCoins waveCoins = new WaveCoins();
+  private final List<EntityType> entities = new ArrayList<>();
+
+  public WaveCoins getWaveCoins() {
+    return waveCoins;
+  }
+
   private final List<Location> spawners = List.of(
     new Location(world, -17, 34, 43),
     new Location(world, -50, 34, 50),
@@ -37,21 +44,18 @@ public class MobWaves implements Listener {
   private MobWave activeWave;
 
   private int getMaxEntitiesPerSpawner() {
-    return waveCount + 3;
+    return waveCount + 2;
   }
 
   private EntityType chooseRandom() {
-
-    if (new Random().nextInt(100) == 100) {
-      return EntityType.WITHER;
-    }
-
     int random = new Random().nextInt(entities.size() - 1);
     return this.entities.get(random);
   }
 
   private void spawnWave() {
     waveCount++;
+
+    this.entities.addAll(WaveEntities.WAVES.get(waveCount));
 
     this.activeWave = new MobWave(this.spawners.size() * this.getMaxEntitiesPerSpawner(), this.waveCount);
 
@@ -66,7 +70,11 @@ public class MobWaves implements Listener {
       World world1 = location.getWorld();
 
       for (int i = 0; i < this.getMaxEntitiesPerSpawner(); i++) {
-        LivingEntity entity = (LivingEntity) world1.spawnEntity(location.clone().add(0.0, 2.0, 0.0), chooseRandom());
+        Monster entity = (Monster) world1.spawnEntity(location.clone().add(0.0, 2.0, 0.0), chooseRandom());
+
+        entity.setCustomNameVisible(true);
+
+        entity.customName(Component.text("Wave " + waveCount).color(NamedTextColor.RED));
 
         this.activeWave.getEntities().add(entity);
       }
@@ -76,24 +84,55 @@ public class MobWaves implements Listener {
   }
 
   @EventHandler
-  public void onEntityDeath(EntityDeathEvent event) {
+  public void onEntityTarget(EntityTargetLivingEntityEvent event) {
 
-    if (this.activeWave == null)
+    if (event.getTarget() == null)
       return;
+
+    if (event.getTarget().getType() == EntityType.VILLAGER)
+      event.setCancelled(true);
+
+  }
+
+  @EventHandler (priority = EventPriority.HIGHEST)
+  public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+
+    if (event.getEntity() instanceof Player) {
+      event.setCancelled(true);
+      return;
+    }
+
+    if (!(event.getEntity() instanceof LivingEntity living))
+      return;
+
+    if (living.getHealth() > event.getDamage())
+      return;
+
 
     if (!this.activeWave.getEntities().contains(event.getEntity()))
       return;
 
-    event.setDroppedExp(0);
-    event.getDrops().clear();
-
     this.activeWave.getEntities().remove(event.getEntity());
+
     this.activeWave.updateBar();
 
     if (this.activeWave.getEntities().isEmpty() && this.waveCount < this.maxWaveCount) {
       this.activeWave.removeBossBar();
       this.respawnWave();
     }
+
+    if (!(event.getDamager() instanceof Player player))
+      return;
+
+    this.waveCoins.addCoins(player, event.getEntityType());
+  }
+
+  @EventHandler
+  public void onEntityDeath(EntityDeathEvent event) {
+
+    event.setDroppedExp(0);
+    event.getDrops().clear();
+
   }
 
   public void respawnWave() {

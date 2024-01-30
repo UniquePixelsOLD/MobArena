@@ -20,6 +20,8 @@ dependencies {
   paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
 
   compileOnly("net.uniquepixels:game-engine:1.0.0")
+  compileOnly("net.uniquepixels:core:latest")
+  compileOnly("net.uniquepixels:core-api:latest")
 }
 
 tasks {
